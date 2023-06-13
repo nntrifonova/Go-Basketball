@@ -1,0 +1,41 @@
+version: "3"
+services:
+  nginx-r:
+    depends_on:
+      - frontend-r
+      - backend-go
+    build:
+      dockerfile: Dockerfile_nginx
+      context: .
+    ports:
+      - "80:80"
+  backend-go:
+    container_name: backend_app_go
+    build:
+        dockerfile: Dockerfile_back
+        context: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./Basketball-back:/var/www/html
+
+  frontend-r:
+    container_name: frontend_app_r
+    build:
+      dockerfile: Dockerfile_front
+      context: .
+    ports:
+      - "3000:3000"
+  mysql-m:
+    build:
+      dockerfile: Dockerfile_mysql
+      context: .
+      args:
+        - MYSQL_DATABASE=${MYSQL_DATABASE}
+        - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - ./Basketball-back/Database:/docker-entrypoint-initdb.d:ro
+
+
