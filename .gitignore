@@ -21,5 +21,10 @@
 go.work
 
 .env
-Basketball-back/go.sum
+basketball/go.sum
+basketball/go.mod
+basketball/basketball
+.bashrc
+.idea
 pkg
+bin
