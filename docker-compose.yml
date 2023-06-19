@@ -17,7 +17,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./Basketball-back:/var/www/html
+      - ./basketball:/var/www/html
 
   frontend-r:
     container_name: frontend_app_r
@@ -35,7 +35,3 @@ services:
         - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     ports:
       - "${MYSQL_PORT}:3306"
-    volumes:
-      - ./Basketball-back/Database:/docker-entrypoint-initdb.d:ro
-
-

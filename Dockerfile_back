@@ -11,7 +11,7 @@ RUN go install -v ./...
 
 EXPOSE 8080
 # Install server application
-CMD ["go", "run", "main.go"]
+CMD ["go", "run", "main.go", "--network='host'"]
 
 ##RUN go get github.com/astaxie/beego
 ##RUN go get github.com/beego/bee
