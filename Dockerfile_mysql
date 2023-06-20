@@ -1,4 +1,4 @@
-FROM mysql:latest
+FROM mariadb:latest
 
 
 RUN chown -R mysql:root /var/lib/mysql/
@@ -8,5 +8,6 @@ ARG MYSQL_ROOT_PASSWORD
 
 ENV MYSQL_DATABASE=$MYSQL_DATABASE
 ENV MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+ENV MYSQL_AUTHENTICATION_PLUGIN: mysql_native_password
 
 EXPOSE 3306
