@@ -1,0 +1,54 @@
+{
+	"database": {
+		"default": {
+			"host": "127.0.0.1",
+			"port": "3306",
+			"user": "root",
+			"pwd": "root",
+			"name": "goadmin",
+			"driver": "mysql",
+			"max_idle_con": 5,
+			"max_open_con": 10,
+			"conn_max_life_time": 3600000000000
+		}
+	},
+	"app_id": "Ju9b6iNNAPCx",
+	"language": "cn",
+	"prefix": "admin",
+	"theme": "sword",
+	"store": {
+		"path": "./uploads",
+		"prefix": "uploads"
+	},
+	"title": "GoAdmin",
+	"logo": "GoAdmin",
+	"mini_logo": "GA",
+	"index": "/",
+	"login_url": "/login",
+	"debug": true,
+	"env": "local",
+	"info_log": "/home/test/GolandProjects/Go-Basketball/basketball/logs/info.log",
+	"error_log": "/home/test/GolandProjects/Go-Basketball/basketball/logs/error.log",
+	"access_log": "/home/test/GolandProjects/Go-Basketball/basketball/logs/access.log",
+	"session_life_time": 7200,
+	"file_upload_engine": {
+		"name": "local"
+	},
+	"login_title": "GoAdmin",
+	"login_logo": "GoAdmin",
+	"auth_user_table": "goadmin_users",
+	"bootstrap_file_path": "/home/test/GolandProjects/Go-Basketball/basketball/bootstrap.go",
+	"go_mod_file_path": "/home/test/GolandProjects/Go-Basketball/basketball/go.mod",
+	"asset_root_path": "./public/",
+	"url_format": {
+		"info": "/info/:__prefix",
+		"detail": "/info/:__prefix/detail",
+		"create": "/new/:__prefix",
+		"delete": "/delete/:__prefix",
+		"export": "/export/:__prefix",
+		"edit": "/edit/:__prefix",
+		"show_edit": "/info/:__prefix/edit",
+		"show_create": "/info/:__prefix/new",
+		"update": "/update/:__prefix"
+	}
+}
