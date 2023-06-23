@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./tables"
+	"basketball/tables"
 	"github.com/GoAdminGroup/go-admin/modules/config"
 	"github.com/GoAdminGroup/go-admin/tests"
 	"github.com/GoAdminGroup/go-admin/tests/common"

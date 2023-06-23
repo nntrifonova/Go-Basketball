@@ -32,3 +32,6 @@ basketball/conf
 basketball/views/easyui
 basketball/static/easyui
 basketball/conf/app.conf
+basketball/config.json
+basketball/adm.ini
+basketball/logs
