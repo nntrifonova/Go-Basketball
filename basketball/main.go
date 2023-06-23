@@ -43,7 +43,7 @@ func startServer() {
 	})
 
 	beego.BConfig.Listen.HTTPAddr = "127.0.0.1"
-	beego.BConfig.Listen.HTTPPort = 80
+	beego.BConfig.Listen.HTTPPort = 1025
 	go app.Run()
 
 	quit := make(chan os.Signal, 1)
