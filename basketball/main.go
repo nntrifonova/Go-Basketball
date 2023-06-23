@@ -15,6 +15,7 @@ import (
 	"github.com/astaxie/beego"
 
 	"basketball/pages"
+	_ "basketball/routers"
 	"basketball/tables"
 )
 
@@ -45,6 +46,7 @@ func startServer() {
 	beego.BConfig.Listen.HTTPAddr = "127.0.0.1"
 	beego.BConfig.Listen.HTTPPort = 1025
 	go app.Run()
+	beego.Run()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
