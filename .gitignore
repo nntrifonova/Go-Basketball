@@ -35,3 +35,14 @@ basketball/conf/app.conf
 basketball/config.json
 basketball/adm.ini
 basketball/logs
+
+
+Basketball/go.sum
+Basketball/go.mod
+
+Basketball/swagger
+Basketball/build
+Basketball/conf/app.conf
+Basketball/config.json
+Basketball/adm.ini
+Basketball/logs
