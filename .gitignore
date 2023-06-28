@@ -28,13 +28,15 @@ basketball/basketball
 .idea
 pkg
 bin
-basketball/conf
-basketball/views/easyui
-basketball/static/easyui
-basketball/conf/app.conf
-basketball/config.json
+
+B/conf/app.conf
+B/config.json
 basketball/adm.ini
 basketball/logs
+B/go.sum
+B/go.mod
+B/B
+
 
 
 Basketball/go.sum
