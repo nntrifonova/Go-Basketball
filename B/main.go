@@ -1,15 +1,63 @@
 package main
 
 import (
-	_ "B/routers"
+	"log"
+	"os"
+	"os/signal"
 
-	beego "github.com/beego/beego/v2/server/web"
+	_ "github.com/GoAdminGroup/go-admin/adapter/beego"            // web framework adapter
+	_ "github.com/GoAdminGroup/go-admin/modules/db/drivers/mysql" // sql driver
+	_ "github.com/GoAdminGroup/themes/sword"                      // ui theme
+
+	"github.com/GoAdminGroup/go-admin/engine"
+	"github.com/GoAdminGroup/go-admin/template"
+	"github.com/GoAdminGroup/go-admin/template/chartjs"
+	"github.com/astaxie/beego"
+
+	"B/pages"
+	_ "B/routers"
+	"B/tables"
+	U "B/utils"
 )
 
 func main() {
-	if beego.BConfig.RunMode == "dev" {
-		beego.BConfig.WebConfig.DirectoryIndex = true
-		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
+	startServer()
+}
+
+func startServer() {
+
+	app := beego.NewApp()
+
+	template.AddComp(chartjs.NewChart())
+
+	eng := engine.Default()
+
+	beego.SetStaticPath("/uploads", "uploads")
+
+	if err := eng.AddConfigFromJSON("./config.json").
+		AddGenerators(tables.Generators).
+		Use(app); err != nil {
+		panic(err)
 	}
-	beego.Run()
+
+	eng.HTML("GET", "/admin", pages.GetDashBoard)
+	eng.HTMLFile("GET", "/admin/hello", "./html/hello.tmpl", map[string]interface{}{
+		"msg": "Hello world",
+	})
+
+	beego.BConfig.Listen.HTTPAddr = "127.0.0.1"
+	beego.BConfig.Listen.HTTPPort = 8080
+
+	if len(os.Args) > 1 {
+		go app.Run()
+	} else {
+		U.Main()
+	}
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	log.Print("closing database connection")
+	eng.MysqlConnection().Close()
+
 }
