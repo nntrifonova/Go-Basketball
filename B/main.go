@@ -1,6 +1,8 @@
 package main
 
 import (
+	"B/utils"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -17,11 +19,16 @@ import (
 	"B/pages"
 	_ "B/routers"
 	"B/tables"
-	U "B/utils"
+	_ "B/utils"
 )
 
 func main() {
-	startServer()
+	if len(os.Args) >= 1 {
+		fmt.Println(os.Args)
+		startServer()
+	} else {
+		utils.Main()
+	}
 }
 
 func startServer() {
@@ -48,11 +55,7 @@ func startServer() {
 	beego.BConfig.Listen.HTTPAddr = "127.0.0.1"
 	beego.BConfig.Listen.HTTPPort = 8080
 
-	if len(os.Args) > 1 {
-		go app.Run()
-	} else {
-		U.Main()
-	}
+	go app.Run()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)

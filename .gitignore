@@ -21,9 +21,7 @@
 go.work
 
 .env
-basketball/go.sum
-basketball/go.mod
-basketball/basketball
+
 .bashrc
 .idea
 pkg
@@ -31,20 +29,9 @@ bin
 
 B/conf/app.conf
 B/config.json
-basketball/adm.ini
-basketball/logs
+B/adm.ini
+B/logs
 B/go.sum
 B/go.mod
-B/B
-
-
-
-Basketball/go.sum
-Basketball/go.mod
-
-Basketball/swagger
-Basketball/build
-Basketball/conf/app.conf
-Basketball/config.json
-Basketball/adm.ini
-Basketball/logs
+B/build
+B/Makefile
