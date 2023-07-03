@@ -2,110 +2,61 @@ package controllers
 
 import (
 	"B/models"
-	"encoding/json"
+	"B/utils"
+	"fmt"
+	"github.com/beego/beego/v2/adapter/validation"
+	"strings"
+	"time"
+)
 
-	beego "github.com/beego/beego/v2/server/web"
+var (
+	ErrPhoneIsRegis     = ErrResponse{422001, "11"}
+	ErrNicknameIsRegis  = ErrResponse{422002, "22"}
+	ErrNicknameOrPasswd = ErrResponse{422003, "33"}
 )
 
 // Operations about Users
 type UserController struct {
-	beego.Controller
+	BaseController
+}
+type LoginToken struct {
+	User  models.User `json:"user"`
+	Token string      `json:"token"`
 }
 
-// @Title CreateUser
-// @Description create users
-// @Param	body		body 	models.User	true		"body for user content"
-// @Success 200 {int} models.User.Id
-// @Failure 403 body is empty
-// @router / [post]
-func (u *UserController) Post() {
-	var user models.User
-	json.Unmarshal(u.Ctx.Input.RequestBody, &user)
-	uid := models.AddUser(user)
-	u.Data["json"] = map[string]string{"uid": uid}
-	u.ServeJSON()
-}
+func (this *UserController) Registered() {
+	phone := this.GetString("phone")
+	nickname := this.GetString("nickname")
+	password := this.GetString("password")
 
-// @Title GetAll
-// @Description get all Users
-// @Success 200 {object} models.User
-// @router / [get]
-func (u *UserController) GetAll() {
-	users := models.GetAllUsers()
-	u.Data["json"] = users
-	u.ServeJSON()
-}
+	valid := validation.Validation{}
+	//表单验证
+	valid.Required(phone, "phone").Message("1")
+	valid.Required(nickname, "nickname").Message("2")
+	valid.Required(password, "password").Message("3")
+	valid.Mobile(phone, "phone").Message("4")
+	valid.MinSize(nickname, 2, "nickname").Message("min 2")
+	valid.MaxSize(nickname, 40, "nickname").Message("max 40")
+	valid.Length(password, 32, "password").Message("5")
 
-// @Title Get
-// @Description get user by uid
-// @Param	uid		path 	string	true		"The key for staticblock"
-// @Success 200 {object} models.User
-// @Failure 403 :uid is empty
-// @router /:uid [get]
-func (u *UserController) Get() {
-	uid := u.GetString(":uid")
-	if uid != "" {
-		user, err := models.GetUser(uid)
-		if err != nil {
-			u.Data["json"] = err.Error()
-		} else {
-			u.Data["json"] = user
+	if valid.HasErrors() {
+
+		for _, err := range valid.Errors {
+			this.Ctx.ResponseWriter.WriteHeader(403)
+			this.Data["json"] = ErrResponse{403001, map[string]string{err.Key: err.Message}}
+			this.ServeJSON()
+			return
 		}
 	}
-	u.ServeJSON()
-}
 
-// @Title Update
-// @Description update the user
-// @Param	uid		path 	string	true		"The uid you want to update"
-// @Param	body		body 	models.User	true		"body for user content"
-// @Success 200 {object} models.User
-// @Failure 403 :uid is not int
-// @router /:uid [put]
-func (u *UserController) Put() {
-	uid := u.GetString(":uid")
-	if uid != "" {
-		var user models.User
-		json.Unmarshal(u.Ctx.Input.RequestBody, &user)
-		uu, err := models.UpdateUser(uid, &user)
-		if err != nil {
-			u.Data["json"] = err.Error()
-		} else {
-			u.Data["json"] = uu
-		}
+	user := models.User{
+		Phone:    phone,
+		Nickname: nickname,
+		Password: password,
 	}
-	u.ServeJSON()
-}
+	this.Data["json"] = Response{0, "success.", models.CreateUser(user)}
+	this.ServeJSON()
 
-// @Title Delete
-// @Description delete the user
-// @Param	uid		path 	string	true		"The uid you want to delete"
-// @Success 200 {string} delete success!
-// @Failure 403 uid is empty
-// @router /:uid [delete]
-func (u *UserController) Delete() {
-	uid := u.GetString(":uid")
-	models.DeleteUser(uid)
-	u.Data["json"] = "delete success!"
-	u.ServeJSON()
-}
-
-// @Title Login
-// @Description Logs user into the system
-// @Param	username		query 	string	true		"The username for login"
-// @Param	password		query 	string	true		"The password for login"
-// @Success 200 {string} login success
-// @Failure 403 user not exist
-// @router /login [get]
-func (u *UserController) Login() {
-	username := u.GetString("username")
-	password := u.GetString("password")
-	if models.Login(username, password) {
-		u.Data["json"] = "login success"
-	} else {
-		u.Data["json"] = "user not exist"
-	}
-	u.ServeJSON()
 }
 
 // @Title logout
@@ -115,4 +66,57 @@ func (u *UserController) Login() {
 func (u *UserController) Logout() {
 	u.Data["json"] = "logout success"
 	u.ServeJSON()
+}
+
+// @Title 登录
+// @Description 账号登录
+// @Success 200 {object}
+// @Failure 404 no enough input
+// @Failure 401 No Admin
+// @router /login [post]
+func (this *UserController) Login() {
+	nickname := this.GetString("nickname")
+	password := this.GetString("password")
+
+	user, ok := models.CheckUserAuth(nickname, password)
+	if !ok {
+		this.Data["json"] = ErrNicknameOrPasswd
+		this.ServeJSON()
+		return
+	}
+
+	et := utils.EasyToken{
+		Username: user.Nickname,
+		Uid:      user.Id,
+		Expires:  time.Now().Unix() + 3600,
+	}
+
+	token, err := et.GetToken()
+	if token == "" || err != nil {
+		this.Data["json"] = ErrResponse{-0, err}
+	} else {
+		this.Data["json"] = Response{0, "success.", LoginToken{user, token}}
+	}
+
+	this.ServeJSON()
+}
+
+// @Title 认证测试
+// @Description 测试错误码
+// @Success 200 {object}
+// @Failure 401 unauthorized
+// @router /auth [get]
+func (this *UserController) Auth() {
+	et := utils.EasyToken{}
+	authtoken := strings.TrimSpace(this.Ctx.Request.Header.Get("Authorization"))
+	valido, err := et.ValidateToken(authtoken)
+	if !valido {
+		this.Ctx.ResponseWriter.WriteHeader(401)
+		this.Data["json"] = ErrResponse{-1, fmt.Sprintf("%s", err)}
+		this.ServeJSON()
+		return
+	}
+
+	this.Data["json"] = Response{0, "success.", "is login"}
+	this.ServeJSON()
 }

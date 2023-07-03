@@ -14,6 +14,7 @@ import (
 )
 
 func init() {
+	beego.Router("/", &controllers.DefaultController{}, "*:GetAll")
 	ns := beego.NewNamespace("/v1",
 		beego.NSNamespace("/object",
 			beego.NSInclude(

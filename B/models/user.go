@@ -1,8 +1,7 @@
 package models
 
 import (
-	"errors"
-	"strconv"
+	"github.com/beego/beego/v2/adapter/orm"
 	"time"
 )
 
@@ -10,71 +9,85 @@ var (
 	UserList map[string]*User
 )
 
-func init() {
-	UserList = make(map[string]*User)
-	u := User{"user_11111", "astaxie", "11111", Profile{"male", 20, "Singapore", "astaxie@gmail.com"}}
-	UserList["user_11111"] = &u
-}
-
 type User struct {
-	Id       string
-	Username string
-	Password string
+	Id       int64     `json:"id" orm:"column(id);pk;auto;unique"`
+	Phone    string    `json:"phone" orm:"column(phone);unique;size(11)"`
+	Nickname string    `json:"nickname" orm:"column(nickname);unique;size(40);"`
+	Password string    `json:"-" orm:"column(password);size(40)"`
+	Created  time.Time `json:"create_at" orm:"column(create_at);auto_now_add;type(datetime)"`
+	Updated  time.Time `json:"-" orm:"column(update_at);auto_now;type(datetime)"`
 	Profile  Profile
 }
 
 type Profile struct {
-	Gender  string
-	Age     int
-	Address string
-	Email   string
+	Gender string `json:"-" orm:"column(gender);size(40)"`
+	Age    int    `json:"-" orm:"column(age);size(40)"`
+	Email  string `json:"-" orm:"column(email);size(40)"`
 }
 
-func AddUser(u User) string {
-	u.Id = "user_" + strconv.FormatInt(time.Now().UnixNano(), 10)
-	UserList[u.Id] = &u
-	return u.Id
+func (u *User) TableName() string {
+	return TableName("user")
 }
 
-func GetUser(uid string) (u *User, err error) {
-	if u, ok := UserList[uid]; ok {
-		return u, nil
+func init() {
+	orm.RegisterModel(new(User))
+}
+
+func Users() orm.QuerySeter {
+	return orm.NewOrm().QueryTable(new(User))
+}
+
+func CreateUser(user User) User {
+	o := orm.NewOrm()
+	o.Insert(&user)
+	return user
+}
+
+func CheckUserAuth(nickname string, password string) (User, bool) {
+	o := orm.NewOrm()
+	user := User{
+		Nickname: nickname,
+		Password: password,
 	}
-	return nil, errors.New("User not exists")
-}
-
-func GetAllUsers() map[string]*User {
-	return UserList
-}
-
-func UpdateUser(uid string, uu *User) (a *User, err error) {
-	if u, ok := UserList[uid]; ok {
-		if uu.Username != "" {
-			u.Username = uu.Username
-		}
-		if uu.Password != "" {
-			u.Password = uu.Password
-		}
-		if uu.Profile.Age != 0 {
-			u.Profile.Age = uu.Profile.Age
-		}
-		if uu.Profile.Address != "" {
-			u.Profile.Address = uu.Profile.Address
-		}
-		if uu.Profile.Gender != "" {
-			u.Profile.Gender = uu.Profile.Gender
-		}
-		if uu.Profile.Email != "" {
-			u.Profile.Email = uu.Profile.Email
-		}
-		return u, nil
+	err := o.Read(&user, "Nickname", "Password")
+	if err != nil {
+		return user, false
 	}
-	return nil, errors.New("User Not Exist")
+	return user, true
+}
+
+// User database CRUD methods include Insert, Read, Update and Delete
+func (usr *User) Insert() error {
+	if _, err := orm.NewOrm().Insert(usr); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (usr *User) Read(fields ...string) error {
+	if err := orm.NewOrm().Read(usr, fields...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (usr *User) Update(fields ...string) error {
+	if _, err := orm.NewOrm().Update(usr, fields...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (usr *User) Delete() error {
+	if _, err := orm.NewOrm().Delete(usr); err != nil {
+		return err
+	}
+	return nil
 }
 
 func Login(username, password string) bool {
 	for _, u := range UserList {
-		if u.Username == username && u.Password == password {
+		if u.Nickname == username && u.Password == password {
 			return true
 		}
 	}
