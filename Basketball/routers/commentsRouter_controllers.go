@@ -54,16 +54,7 @@ func init() {
 
 	beego.GlobalControllerRouter["Basketball/controllers:UserController"] = append(beego.GlobalControllerRouter["Basketball/controllers:UserController"],
 		beego.ControllerComments{
-			Method:           "Auth",
-			Router:           "/auth",
-			AllowHTTPMethods: []string{"get"},
-			MethodParams:     param.Make(),
-			Filters:          nil,
-			Params:           nil})
-
-	beego.GlobalControllerRouter["Basketball/controllers:UserController"] = append(beego.GlobalControllerRouter["Basketball/controllers:UserController"],
-		beego.ControllerComments{
-			Method:           "Login",
+			Method:           "LoginUser",
 			Router:           "/login",
 			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
@@ -72,9 +63,9 @@ func init() {
 
 	beego.GlobalControllerRouter["Basketball/controllers:UserController"] = append(beego.GlobalControllerRouter["Basketball/controllers:UserController"],
 		beego.ControllerComments{
-			Method:           "Logout",
-			Router:           "/logout",
-			AllowHTTPMethods: []string{"get"},
+			Method:           "RegisterUser",
+			Router:           "/register",
+			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})

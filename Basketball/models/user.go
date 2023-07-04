@@ -39,26 +39,6 @@ func (u *User) TableName() string {
 	return "users"
 }
 
-func IndexAll() (users []User, err error) {
-	// New ORM object
-	o := orm.NewOrm()
-
-	// Define empty users
-	var us []User
-
-	// Query table (Just get NAME and EMAIL) - Limit to 50 rows
-	count, e := o.QueryTable(new(User)).Limit(50).All(&us, "Name", "Email")
-	if e != nil {
-		return nil, e
-	}
-
-	if count <= 0 {
-		return nil, errors.New("nothing found")
-	}
-
-	return us, nil
-}
-
 // Create a new user
 func CreateNew(email, password, name string) (id int64, err error) {
 	// New ORM object

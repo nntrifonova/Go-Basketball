@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	beego "github.com/beego/beego/v2/server/web"
-	"strings"
 )
 
 type UserController struct {
@@ -23,6 +22,10 @@ type AuthorizedResponse struct {
 // Define a struct to return when there is an error
 type ErrorResponse struct {
 	Message string `json:"message"`
+}
+
+func (cont *UserController) GetRegUser() {
+	cont.TplName = "index.tpl"
 }
 
 // @Title Register User
@@ -60,7 +63,7 @@ func (cont *UserController) RegisterUser() {
 	}
 
 	// Get Token
-	token, err := services.MakeToken(id)
+	token, err := services.MakeToken()
 	if err != nil {
 		errResponse := ErrorResponse{
 			Message: err.Error(),
@@ -101,7 +104,7 @@ func (cont *UserController) LoginUser() {
 	}
 
 	// Get Token
-	token, err := services.MakeToken(user.Id)
+	token, err := services.MakeToken()
 	if err != nil {
 		errResponse := ErrorResponse{
 			Message: err.Error(),
@@ -118,51 +121,5 @@ func (cont *UserController) LoginUser() {
 		Token:   token,
 	}
 	cont.Data["json"] = successRes
-	cont.ServeJSON()
-}
-
-// @Title Index Users
-// @Description Index all of users when request is authorized
-// @Param	authorization	header	string	true	"Authorization Token"
-// @router /all [get]
-func (cont *UserController) IndexAll(authorization string) {
-	// Get token
-	token := authorization[strings.IndexByte(authorization, ' ')+1:]
-
-	// Validate token (now, just user with ID=1 will be validated)
-	valid, err := services.ValidateToken(token, 1)
-	if err != nil {
-		errResponse := ErrorResponse{
-			Message: err.Error(),
-		}
-		cont.Data["json"] = errResponse
-		cont.ServeJSON()
-		cont.StopRun()
-	}
-
-	if !valid {
-		errResponse := ErrorResponse{
-			Message: "authentication token is not valid",
-		}
-		cont.Data["json"] = errResponse
-		cont.ServeJSON()
-		cont.StopRun()
-	}
-
-	// Get all of users
-	users, err := models.IndexAll()
-	if err != nil {
-		errResponse := ErrorResponse{
-			Message: err.Error(),
-		}
-		cont.Data["json"] = errResponse
-		cont.ServeJSON()
-		cont.StopRun()
-	}
-
-	// No error - Show response (users)
-	/////// If you see, the ID and Created_on and Updated_on doesnt have real values
-	////// because we just get NAME and EMAIL field from database
-	cont.Data["json"] = users
 	cont.ServeJSON()
 }

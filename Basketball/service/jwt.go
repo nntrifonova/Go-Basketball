@@ -1,118 +1,69 @@
 package services
 
 import (
-	"crypto/rsa"
-	"github.com/SermoDigital/jose/crypto"
-	"github.com/gbrlsnchs/jwt"
-	"os"
+	"github.com/gbrlsnchs/jwt/v3"
 	"time"
 )
 
 // JWT default/fixed claims
 var (
-	iss = "api"
-	sub = "uid-"
-	aud = "client"
 	exp = 24 * 30 * time.Hour // 30 days
-	nbf = 30 * time.Second    // 30 seconds
+	nbf = 30 * time.Second    // 30 minutes
 )
 
-// Get public/private keys
-func GetKeyPair() (private *rsa.PrivateKey, public *rsa.PublicKey, err error) {
-	// Read private key file
-	privKeyBytes, e := os.ReadFile("./keys/private.txt")
-	if e != nil {
-		return nil, nil, e
-	}
-	// Create private key object
-	privKey, e := crypto.ParseRSAPrivateKeyFromPEM(privKeyBytes)
-	if e != nil {
-		return nil, nil, e
-	}
-	// Read public key file
-	pubKeyBytes, e := os.ReadFile("./keys/public.txt")
-	if e != nil {
-		return nil, nil, e
-	}
-	// Create public key object
-	pubKey, e := crypto.ParseRSAPublicKeyFromPEM(pubKeyBytes)
-	if e != nil {
-		return nil, nil, e
-	}
-
-	return privKey, pubKey, nil
+type CustomPayload struct {
+	jwt.Payload
+	Foo string `json:"foo,omitempty"`
+	Bar int    `json:"bar,omitempty"`
 }
 
+var hs = jwt.NewHS256([]byte("secret"))
+
 // Validate JWT token
-func ValidateToken(token string, uid int64) (valid bool, err error) {
-	// Get keys
-	privKey, pubKey, e := GetKeyPair()
+func ValidateToken(token []byte) (answer bool) {
+
+	var (
+		now = time.Now()
+		aud = jwt.Audience{"https://golang.org"}
+
+		// Validate claims "iat", "exp" and "aud".
+		iatValidator = jwt.IssuedAtValidator(now)
+		expValidator = jwt.ExpirationTimeValidator(now)
+		audValidator = jwt.AudienceValidator(aud)
+
+		// Use jwt.ValidatePayload to build a jwt.VerifyOption.
+		// Validators are run in the order informed.
+		pll             CustomPayload
+		validatePayload = jwt.ValidatePayload(&pll.Payload, iatValidator, expValidator, audValidator)
+	)
+
+	_, e := jwt.Verify(token, hs, &pll, validatePayload)
 	if e != nil {
-		return false, e
+		return false
 	}
-
-	// Validating
-	now := time.Now()
-	signer := jwt.RS512(privKey, pubKey)
-
-	// First, extract the payload and signature.
-	// This enables un-marshaling the JWT first and verifying it later or vice versa.
-	payload, sig, e := jwt.Parse(token)
-	if e != nil {
-		return false, e
-	}
-
-	// Check signature
-	if e = signer.Verify(payload, sig); e != nil {
-		return false, e
-	}
-
-	// Un-Marshal token
-	var jot jwt.JWT
-	if e = jwt.Unmarshal(payload, &jot); e != nil {
-		return false, e
-	}
-
-	// Validators
-	audV := jwt.AudienceValidator(aud)
-	expV := jwt.ExpirationTimeValidator(now)
-	issV := jwt.IssuerValidator(iss)
-	nbfV := jwt.NotBeforeValidator(now)
-	subV := jwt.SubjectValidator(sub + string(int(uid)))
-
-	// Validate
-	if e := jot.Validate(audV, expV, issV, nbfV, subV); e != nil {
-		return false, e
-	}
-
-	return true, nil
+	return true
 }
 
 // Generate JWT token for user
-func MakeToken(uid int64) (token string, err error) {
-	// Get keys
-	privKey, pubKey, e := GetKeyPair()
-	if e != nil {
-		return "", e
-	}
+func MakeToken() (token string, err error) {
 
 	// Generate JWT Token for user
 	now := time.Now()
-	signer := jwt.RS512(privKey, pubKey)
-	jot := &jwt.JWT{
-		Issuer:         iss,
-		Subject:        sub + string(int(uid)),
-		Audience:       aud,
-		ExpirationTime: now.Add(exp).Unix(),
-		NotBefore:      now.Add(nbf).Unix(),
-		IssuedAt:       now.Unix(),
+	pl := CustomPayload{
+		Payload: jwt.Payload{
+			Issuer:         "gbrlsnchs",
+			Subject:        "someone",
+			Audience:       jwt.Audience{"https://golang.org", "https://jwt.io"},
+			ExpirationTime: jwt.NumericDate(now.Add(exp * 12 * time.Hour)),
+			NotBefore:      jwt.NumericDate(now.Add(nbf)),
+			IssuedAt:       jwt.NumericDate(now),
+			JWTID:          "foobar",
+		},
+		Foo: "foo",
+		Bar: 1337,
 	}
-	jot.SetAlgorithm(signer)
-	payload, e := jwt.Marshal(jot)
-	if e != nil {
-		return "", e
-	}
-	t, e := signer.Sign(payload)
+
+	t, e := jwt.Sign(pl, hs)
 	if e != nil {
 		return "", e
 	}
