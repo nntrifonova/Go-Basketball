@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	beego.Router("/", &controllers.UserController{})
+	beego.Router("/au", &controllers.UserController{})
 	beego.Get("/", func(ctx *context.Context) {
 		_ = ctx.Output.Body([]byte("This is a Beego + JWT API "))
 	})

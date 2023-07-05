@@ -25,7 +25,7 @@
   </header>
   <div class="container">
     <div class="form-group text-center text-danger">
-        <p>{{.Msg}}</p>
+
     </div>
   </div>
 
@@ -61,6 +61,6 @@
     </form>
 
   </div>
-  <script src="/static/js/reload.min.js"></script>
+  <script src="../static/reload.min.js"></script>
 </body>
 </html>
