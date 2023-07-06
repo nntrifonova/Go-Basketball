@@ -1,73 +1,83 @@
 package services
 
 import (
-	"github.com/gbrlsnchs/jwt/v3"
+	"Basketball/conf"
+	"fmt"
+	"github.com/dgrijalva/jwt-go"
+	"net/http"
+	"os"
+	"strings"
 	"time"
 )
 
-// JWT default/fixed claims
-var (
-	exp = 24 * 30 * time.Hour // 30 days
-	nbf = 30 * time.Second    // 30 minutes
-)
-
-type CustomPayload struct {
-	jwt.Payload
-	Foo string `json:"foo,omitempty"`
-	Bar int    `json:"bar,omitempty"`
+type AccessDetails struct {
+	UserId int64
+	Role   string
 }
 
-var hs = jwt.NewHS256([]byte("secret"))
-
-// Validate JWT token
-func ValidateToken(token []byte) (answer bool) {
-
-	var (
-		now = time.Now()
-		aud = jwt.Audience{"https://golang.org"}
-
-		// Validate claims "iat", "exp" and "aud".
-		iatValidator = jwt.IssuedAtValidator(now)
-		expValidator = jwt.ExpirationTimeValidator(now)
-		audValidator = jwt.AudienceValidator(aud)
-
-		// Use jwt.ValidatePayload to build a jwt.VerifyOption.
-		// Validators are run in the order informed.
-		pll             CustomPayload
-		validatePayload = jwt.ValidatePayload(&pll.Payload, iatValidator, expValidator, audValidator)
-	)
-
-	_, e := jwt.Verify(token, hs, &pll, validatePayload)
-	if e != nil {
-		return false
-	}
-	return true
+type TokenDetails struct {
+	AccessToken  string
+	RefreshToken string
+	RefreshUuid  string
+	AtExpires    int64
+	RtExpires    int64
 }
 
-// Generate JWT token for user
-func MakeToken() (token string, err error) {
+func CreateToken(userID int64, role string) (*TokenDetails, error) {
+	td := &TokenDetails{}
+	td.AtExpires = time.Now().Add(time.Hour * 24 * 30).Unix()
+	td.RtExpires = time.Now().Add(time.Hour * 24 * 7).Unix()
+	var err error
 
-	// Generate JWT Token for user
-	now := time.Now()
-	pl := CustomPayload{
-		Payload: jwt.Payload{
-			Issuer:         "gbrlsnchs",
-			Subject:        "someone",
-			Audience:       jwt.Audience{"https://golang.org", "https://jwt.io"},
-			ExpirationTime: jwt.NumericDate(now.Add(exp * 12 * time.Hour)),
-			NotBefore:      jwt.NumericDate(now.Add(nbf)),
-			IssuedAt:       jwt.NumericDate(now),
-			JWTID:          "foobar",
-		},
-		Foo: "foo",
-		Bar: 1337,
+	//Creating Access Token
+	atClaims := jwt.MapClaims{}
+	atClaims["authorized"] = true
+	atClaims["user_id"] = userID
+	atClaims["exp"] = td.AtExpires
+	atClaims["role"] = role
+	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
+
+	td.AccessToken, err = at.SignedString([]byte(conf.GetEnvConst("ACCESS_SECRET")))
+
+	if err != nil {
+		return nil, err
 	}
+	//Creating Refresh Token
+	rtClaims := jwt.MapClaims{}
+	rtClaims["user_id"] = userID
+	rtClaims["exp"] = td.RtExpires
+	rtClaims["role"] = role
+	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
+	td.RefreshToken, err = rt.SignedString([]byte(conf.GetEnvConst("REFRESH_SECRET")))
 
-	t, e := jwt.Sign(pl, hs)
-	if e != nil {
-		return "", e
+	if err != nil {
+		return nil, err
 	}
+	return td, nil
+}
 
-	// Return token
-	return string(t), nil
+func ExtractToken(r *http.Request) string {
+	bearToken := r.Header.Get("Authorization")
+	strArr := strings.Split(bearToken, " ")
+
+	if len(strArr) == 2 {
+		return strArr[1]
+	}
+	return ""
+}
+
+// Parse, validate, and return a token.
+// keyFunc will receive the parsed token and should return the key for validating.
+func VerifyToken(r *http.Request) (*jwt.Token, error) {
+	tokenString := ExtractToken(r)
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("ACCESS_SECRET")), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
 }

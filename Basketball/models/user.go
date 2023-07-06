@@ -1,127 +1,92 @@
 package models
 
 import (
-	"errors"
+	"fmt"
 	"github.com/beego/beego/v2/adapter/orm"
-	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
 type User struct {
-	Id       int64     `json:"id"`
-	Email    string    `json:"email" orm:"unique;index;size(191)"`
-	Password string    `json:"-"`
-	Name     string    `json:"name"`
-	Created  time.Time `json:"created_on" orm:"auto_now_add;type(datetime)"`
-	Updated  time.Time `json:"updated_on" orm:"auto_now;type(datetime)"`
-}
-
-// User model struct (input object)
-type InputUser struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Name     string `json:"name"`
-}
-
-// Define basic credentials struct
-type BasicCredentials struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Id             int64     `json:"id"`
+	Email          string    `json:"email" orm:"unique;index;size(191)"`
+	AccessToken    string    `orm:"size(128)" json:"access_token"`
+	Name           string    `json:"name"`
+	Role           string    `json:"role"`
+	Created        time.Time `json:"created_on" orm:"auto_now_add;type(datetime)"`
+	Updated        time.Time `json:"updated_on" orm:"auto_now;type(datetime)"`
+	EmailConfirmed bool      `orm:"size(128)" json:"email_confirmed"`
+	RecentLogin    time.Time `orm:"column(recent_login);type(timestamp with time zone);null" json:"recent_login"`
 }
 
 func init() {
-	// Register this model for database
 	orm.RegisterModel(new(User))
 }
 
-// Custom table name
-func (u *User) TableName() string {
-	return "users"
-}
-
-// Create a new user
-func CreateNew(email, password, name string) (id int64, err error) {
-	// New ORM object
+// AddUsers insert a new User into database and returns
+// last inserted Id on success.
+func AddUsers(m *User) (id int64, err error) {
 	o := orm.NewOrm()
-
-	// Calculate password hash to save in database
-	passHash, hashErr := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if hashErr != nil {
-		return -1, errors.New("cannot generate hash from password")
-	}
-
-	// Init User and set data
-	user := User{}
-	user.Email = email
-	user.Password = string(passHash)
-	user.Name = name
-
-	// Insert object to database
-	uId, insertErr := o.Insert(&user)
-	if insertErr != nil {
-		return -1, errors.New("failed to insert user to database")
-	}
-
-	// Return result
-	return uId, nil
+	id, err = o.Insert(m)
+	return
 }
 
-// Find an user by ID
-func FindById(id int64) (user *User, err error) {
-	// New ORM object
+// GetUsersById retrieves User by Id. Returns error if
+// Id doesn't exist
+func GetUsersById(id int64) (v *User, err error) {
 	o := orm.NewOrm()
+	v = &User{Id: id}
 
-	// Init user with Id
-	u := User{Id: id}
-
-	// Read from database
-	e := o.Read(&u)
-
-	// Check for errors
-	if e == orm.ErrNoRows {
-		return nil, errors.New("user not found")
-	} else if e == nil {
-		return &u, nil
-	} else {
-		return nil, errors.New("unknown error occurred")
+	if err = o.QueryTable(new(User)).Filter("Id", id).RelatedSel().One(v); err == nil {
+		return v, nil
 	}
+	return nil, err
 }
 
-// Find an user by email
-func FindByEmail(email string) (user *User, err error) {
-	// New ORM object
+// GetUsersByEmail retrieves Customer by Email. Returns error if
+// Id doesn't exist
+func GetUsersByEmail(email string) (v *User, err error) {
 	o := orm.NewOrm()
+	v = &User{Email: email}
 
-	// Init user with Email
-	u := User{Email: email}
-
-	// Read from database
-	e := o.Read(&u, "Email")
-
-	// Check for errors
-	if e == orm.ErrNoRows {
-		return nil, errors.New("user not found")
-	} else if e == nil {
-		return &u, nil
-	} else {
-		return nil, errors.New("unknown error occurred")
+	if err = o.QueryTable(new(User)).Filter("Email", email).RelatedSel().One(v); err == nil {
+		return v, nil
 	}
+	return nil, err
 }
 
-// Login method for user
-func Login(email, password string) (user *User, err error) {
-	// Get user
-	u, e := FindByEmail(email)
+// GetUsersByEmail retrieves Customer by Email. Returns error if
+// Id doesn't exist
 
-	// Check for errors
-	if e == nil {
-		// No error -> Check credentials
-		if pErr := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); pErr != nil {
-			return nil, errors.New("email and password doesn't match")
+// UpdateUsers updates Users by Id and returns error if
+// the record to be updated doesn't exist
+func UpdateUsersById(m *User) (err error) {
+	o := orm.NewOrm()
+	v := User{Id: m.Id}
+
+	// ascertain id exists in the database
+	if err = o.Read(&v); err == nil {
+		var num int64
+
+		if num, err = o.Update(m); err == nil {
+			fmt.Println("Number of records updated in database:", num)
 		}
-		return u, nil
-	} else {
-		// Return error
-		return nil, e
 	}
+	return
+}
+
+// DeleteUser deletes User by Id and returns error if
+// the record to be deleted doesn't exist
+func DeleteUsers(id int64) (err error) {
+	o := orm.NewOrm()
+	v := User{Id: id}
+
+	// ascertain id exists in the database
+	if err = o.Read(&v); err == nil {
+		var num int64
+
+		if num, err = o.Delete(&User{Id: id}); err == nil {
+			fmt.Println("Number of records deleted in database:", num)
+		}
+	}
+	return
 }
