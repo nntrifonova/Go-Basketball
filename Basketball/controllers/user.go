@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"Basketball/models"
-	services "Basketball/services"
+	"Basketball/services"
 	"encoding/json"
 	"fmt"
 	beego "github.com/beego/beego/v2/server/web"
@@ -25,7 +25,8 @@ type ErrorResponse struct {
 }
 
 func (cont *UserController) Get() {
-	cont.TplName = "view/index.tpl"
+	cont.TplName = "index.tpl"
+	cont.Render()
 }
 
 // @Title Register User

@@ -32,31 +32,23 @@
   <div class="container">
     <form action="/" method="post">
       <div class="form-group">
-        <label for="firstName">First Name</label>
+        <label for="firstName">Nickname</label>
         <input type="text" class="form-control" id="firstName" name="firstName" placeholder="First Name">
-      </div>
-      <div class="form-group">
-        <label for="lastName">First Name</label>
-        <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Last Name">
       </div>
       <div class="form-group">
         <label for="email">Email address</label>
         <input type="email" class="form-control" id="email" name="email"  placeholder="Email">
       </div>
       <div class="form-group">
-        <label for="phone">Phone number</label>
-        <input type="text" class="form-control" id="phone" name="phone"  placeholder="Phone number">
-      </div>
-      <div class="form-group">
-        <label for="dob">Date of birth</label>
-        <input type="date" id="dob" name="dob" class="form-control">
-      </div>
-      <div class="form-group">
         <label for="password">Password</label>
         <input type="password" class="form-control" id="password" name="password" placeholder="Password">
       </div>
+      <div class="form-group">
+        <label for="password">Repeat Password</label>
+        <input type="password" class="form-control" id="password-rep" name="password" placeholder="Password">
+      </div>
       <div class="text-center">
-            <button type="submit" class="btn btn-primary align-center">Submit</button>
+            <button type="submit" class="btn btn-primary align-center">Sign up</button>
       </div>
     </form>
 
