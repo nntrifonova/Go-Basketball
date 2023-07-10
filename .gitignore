@@ -27,11 +27,4 @@ go.work
 pkg
 bin
 
-B/conf/app.conf
-B/config.json
-B/adm.ini
-B/logs
-B/go.sum
-B/go.mod
-B/build
-B/Makefile
+Basketball/node_modules

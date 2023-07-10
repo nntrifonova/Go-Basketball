@@ -25,34 +25,9 @@
   </header>
   <div class="container">
     <div class="form-group text-center text-danger">
-
     </div>
   </div>
 
-  <div class="container">
-    <form action="/" method="post">
-      <div class="form-group">
-        <label for="firstName">Nickname</label>
-        <input type="text" class="form-control" id="firstName" name="firstName" placeholder="First Name">
-      </div>
-      <div class="form-group">
-        <label for="email">Email address</label>
-        <input type="email" class="form-control" id="email" name="email"  placeholder="Email">
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" class="form-control" id="password" name="password" placeholder="Password">
-      </div>
-      <div class="form-group">
-        <label for="password">Repeat Password</label>
-        <input type="password" class="form-control" id="password-rep" name="password" placeholder="Password">
-      </div>
-      <div class="text-center">
-            <button type="submit" class="btn btn-primary align-center">Sign up</button>
-      </div>
-    </form>
-
-  </div>
-  <script src="../static/reload.min.js"></script>
+  <script src="../static/main.js"></script>
 </body>
 </html>

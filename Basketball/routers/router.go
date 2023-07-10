@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	beego.Router("/au", &controllers.UserController{})
+	//beego.Router("/au", &controllers.AuthController{})
 	beego.Get("/", func(ctx *context.Context) {
 		_ = ctx.Output.Body([]byte("This is a Beego + JWT API "))
 	})
@@ -27,7 +27,7 @@ func init() {
 		),
 		beego.NSNamespace("/user",
 			beego.NSInclude(
-				&controllers.UserController{},
+				&controllers.AuthController{},
 			),
 		),
 	)
