@@ -10,8 +10,9 @@ type User struct {
 	Id             int64     `json:"id"`
 	Email          string    `json:"email" orm:"unique;index;size(191)"`
 	AccessToken    string    `orm:"size(128)" json:"access_token"`
-	Name           string    `json:"name"`
-	Role           string    `json:"role"`
+	Name           string    `orm:"size(128)" json:"name" `
+	Role           string    `orm:"size(128)" json:"role"`
+	Password       string    `orm:"size(128)" json:"password"`
 	Created        time.Time `json:"created_on" orm:"auto_now_add;type(datetime)"`
 	Updated        time.Time `json:"updated_on" orm:"auto_now;type(datetime)"`
 	EmailConfirmed bool      `orm:"size(128)" json:"email_confirmed"`

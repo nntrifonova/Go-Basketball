@@ -35,16 +35,16 @@ func (c *AuthController) URLMapping() {
 
 // Create a struct to read the email or phone and password from the request body
 type RegisterCredentials struct {
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	PasswordRep string `json:"password-rep"`
+	Name        string `json:"signup-name"`
+	Email       string `json:"signup-email"`
+	Password    string `json:"signup-password"`
+	PasswordRep string `json:"signup-confirm"`
 }
 
 // Create a struct to read the email or phone and password from the request body
 type LoginCredentials struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"login-email"`
+	Password string `json:"login-password"`
 }
 
 // Create a struct to read the email or phone and password from the request body
@@ -73,38 +73,40 @@ func (c *AuthController) Register() {
 
 	if err = json.Unmarshal([]byte(s), &credentials); err != nil {
 		log.Error(err)
-		c.Response(http.StatusBadRequest, nil, err)
+		c.Resp(http.StatusBadRequest, nil, err)
 	}
 	// user credentials validation
 	var canRegisteredEmail, _ = utiles.CanRegisteredOrChanged(credentials.Email)
 
 	if !utiles.ValidateEmail(credentials.Email) {
 		var err = errors.New("email address is invalid")
-		c.Response(http.StatusInternalServerError, nil, err)
+		c.Resp(http.StatusInternalServerError, nil, err)
 	}
 	user.Role = "user"
 
 	if canRegisteredEmail {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(credentials.Password), 8)
 		user.Email = strings.ToLower(credentials.Email)
 		user.Name = credentials.Name
+		user.Password = string(hashedPassword)
 		user.EmailConfirmed = false
 		var accessToken string
 		var userID int64
 
 		if userID, err = models.AddUsers(&user); err != nil {
 			log.Error(err)
-			c.Response(http.StatusInternalServerError, nil, err)
+			c.Resp(http.StatusInternalServerError, nil, err)
 		}
 
 		if accessToken, err = CreateAccessToken(int(user.Id), user.Role); err != nil {
 			log.Error(err)
-			c.Response(http.StatusInternalServerError, nil, err)
+			c.Resp(http.StatusInternalServerError, nil, err)
 		}
 		user.AccessToken = accessToken
 
 		if err = models.UpdateUsersById(&user); err != nil {
 			log.Error(err)
-			c.Response(http.StatusInternalServerError, nil, err)
+			c.Resp(http.StatusInternalServerError, nil, err)
 		}
 		emailConfirmationCode = utiles.GetEmailConfirmationCode(&user, nil)
 		url := conf.GetEnvConst("APP_URL") + "/active/" + emailConfirmationCode
@@ -119,15 +121,19 @@ func (c *AuthController) Register() {
 
 		if err != nil {
 			log.Error(err)
-			c.Response(http.StatusInternalServerError, nil, err)
+			c.Resp(http.StatusInternalServerError, nil, err)
 		}
 		var token AccessToken
 		token.AccessToken = accessToken
 		token.UserID = userID
-		c.Response(http.StatusCreated, token, nil)
+		c.Resp(http.StatusCreated, token, nil)
 
 	} else {
+		var errMessage string
+		errMessage = "such email already exists"
 
+		err := errors.New(errMessage)
+		c.Resp(http.StatusConflict, nil, err)
 	}
 }
 
@@ -142,7 +148,7 @@ func (c *AuthController) Login() {
 
 	if err = json.Unmarshal([]byte(s), &credentials); err != nil {
 		log.Error(err)
-		c.Response(http.StatusBadRequest, nil, err)
+		c.Resp(http.StatusBadRequest, nil, err)
 	}
 
 	// Get the existing entry present in the database for the given email
@@ -160,24 +166,25 @@ func (c *AuthController) Login() {
 
 	if user == nil {
 		err := errors.New("no user found, please check your login data")
-		c.Response(http.StatusBadRequest, nil, err)
+		c.Resp(http.StatusBadRequest, nil, err)
 
 	} else {
 		var accessToken string
 
 		if accessToken, err = CreateAccessToken(int(user.Id), user.Role); err != nil {
 			log.Error(err)
-			c.Response(http.StatusInternalServerError, nil, err)
+			c.Resp(http.StatusInternalServerError, nil, err)
 		}
 
 		// We create another instance of `Credentials` to store the credentials we get from the database
 		storedCredentials := &LoginCredentials{}
+		storedCredentials.Password = user.Password
 
 		// Compare the stored hashed password, with the hashed version of the password that was received
 		if err = bcrypt.CompareHashAndPassword([]byte(storedCredentials.Password), []byte(credentials.Password)); err != nil {
 			// If the two passwords don't match, return a 401 status
 			err := errors.New("wrong password, please enter the correct password")
-			c.Response(http.StatusUnauthorized, nil, err)
+			c.Resp(http.StatusUnauthorized, nil, err)
 		}
 		// If we reach this point, that means the users password was correct, and that they are authorized
 		// The default 200 status is sent
@@ -189,9 +196,9 @@ func (c *AuthController) Login() {
 
 		if err = models.UpdateUsersById(user); err != nil {
 			log.Error(err)
-			c.Response(http.StatusInternalServerError, nil, err)
+			c.Resp(http.StatusInternalServerError, nil, err)
 		}
-		c.Response(http.StatusOK, token, nil)
+		c.Resp(http.StatusOK, token, nil)
 	}
 }
 
@@ -205,21 +212,21 @@ func (c *AuthController) CheckAccessToken() {
 
 	if registeredUser, err = models.GetUsersById(id); err != nil {
 		log.Error(err)
-		c.Response(http.StatusInternalServerError, nil, err)
+		c.Resp(http.StatusInternalServerError, nil, err)
 	}
 
 	if err = json.Unmarshal([]byte(s), &user); err != nil {
 		log.Error(err)
-		c.Response(http.StatusBadRequest, nil, err)
+		c.Resp(http.StatusBadRequest, nil, err)
 	}
 	t2 := time.Now()
 	t1 := user.RecentLogin
 	diff := t2.Sub(t1)
 
 	if registeredUser.AccessToken == user.AccessToken && diff.Hours() < 12 {
-		c.Response(http.StatusOK, true, nil)
+		c.Resp(http.StatusOK, true, nil)
 	}
-	c.Response(http.StatusBadRequest, false, nil)
+	c.Resp(http.StatusBadRequest, false, nil)
 }
 
 func (c *AuthController) ConfirmEmail() {
@@ -245,13 +252,13 @@ func (c *AuthController) ConfirmEmail() {
 
 		if err = models.UpdateUsersById(user); err != nil {
 			log.Error(err)
-			c.Response(http.StatusInternalServerError, nil, err)
+			c.Resp(http.StatusInternalServerError, nil, err)
 		}
-		c.Response(http.StatusOK, "Email confirmed", nil)
+		c.Resp(http.StatusOK, "Email confirmed", nil)
 
 	} else {
 		err := errors.New("email validation code is wrong")
-		c.Response(http.StatusBadRequest, nil, err)
+		c.Resp(http.StatusBadRequest, nil, err)
 	}
 }
 

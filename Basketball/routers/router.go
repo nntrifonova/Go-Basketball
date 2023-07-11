@@ -9,27 +9,42 @@ package routers
 
 import (
 	"Basketball/controllers"
-	"github.com/beego/beego/v2/server/web/context"
+	"Basketball/middlewares"
+	"github.com/beego/beego/v2/server/web/filter/cors"
 
 	beego "github.com/beego/beego/v2/server/web"
 )
 
 func init() {
-	//beego.Router("/au", &controllers.AuthController{})
-	beego.Get("/", func(ctx *context.Context) {
-		_ = ctx.Output.Body([]byte("This is a Beego + JWT API "))
-	})
-	ns := beego.NewNamespace("/v1",
-		beego.NSNamespace("/object",
-			beego.NSInclude(
-				&controllers.ObjectController{},
-			),
-		),
-		beego.NSNamespace("/user",
-			beego.NSInclude(
-				&controllers.AuthController{},
-			),
-		),
+	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
+		AllowAllOrigins: true,
+		AllowMethods:    []string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"},
+		AllowHeaders: []string{"Origin", "Authorization", "Access-Control-Allow-Origin", "Content-Type",
+			"X-ACCESS-TOKEN", "X-ACCESS-PRODUCT"},
+		ExposeHeaders: []string{"Content-Length", "Access-Control-Allow-Origin"},
+	}))
+
+	beego.Router("/", &controllers.BaseController{})
+	beego.Router("/active/:code([0-9a-zA-Z]+)", &controllers.AuthController{}, "get:ConfirmEmail")
+
+	nsAuth := beego.NewNamespace("/auth",
+		beego.NSRouter("/register", &controllers.AuthController{}, "post:Register"),
+		beego.NSRouter("/login", &controllers.AuthController{}, "post:Login"),
+		beego.NSRouter("/:id/access_token", &controllers.AuthController{}, "post:CheckAccessToken"),
+		beego.NSRouter("/:id/logout", &controllers.AuthController{}, "get:Logout"),
 	)
-	beego.AddNamespace(ns)
+
+	nsApi := beego.NewNamespace("/api",
+
+		beego.NSBefore(middlewares.Jwt),
+		beego.NSRouter("/:id/me", &controllers.UsersController{}, "get:GetCurrent"),
+
+		beego.NSBefore(middlewares.CheckEmailIsValid),
+		beego.NSRouter("/:id/email", &controllers.UsersController{}, "put:PutEmail"),
+		beego.NSRouter("/:id/valid_email", &controllers.UsersController{}, "get:CheckEmail"),
+		beego.NSRouter("/:id/password", &controllers.UsersController{}, "put:PutPassword"),
+		beego.NSRouter("/:id/validate_email", &controllers.UsersController{}, "get:ValidateEmail"),
+	)
+
+	beego.AddNamespace(nsAuth, nsApi)
 }
