@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -71,14 +72,24 @@ func (c *AuthController) Register() {
 	s := string(c.Ctx.Input.RequestBody)
 	var emailConfirmationCode string
 
+	log.Printf(s)
+
 	if err = json.Unmarshal([]byte(s), &credentials); err != nil {
-		log.Error(err)
-		c.Resp(http.StatusBadRequest, nil, err)
+		//fmt.Print("errorr1")
+		//log.Error(err)
+		//c.Resp(http.StatusBadRequest, nil, err)
+
+		log.Printf("error decoding sakura response: %v", err)
+		if e, ok := err.(*json.SyntaxError); ok {
+			log.Printf("syntax error at byte offset %d", e.Offset)
+		}
+		log.Printf("sakura response: %q", []byte(s))
 	}
 	// user credentials validation
 	var canRegisteredEmail, _ = utiles.CanRegisteredOrChanged(credentials.Email)
 
 	if !utiles.ValidateEmail(credentials.Email) {
+		fmt.Print("errorr2")
 		var err = errors.New("email address is invalid")
 		c.Resp(http.StatusInternalServerError, nil, err)
 	}
@@ -94,17 +105,20 @@ func (c *AuthController) Register() {
 		var userID int64
 
 		if userID, err = models.AddUsers(&user); err != nil {
+			fmt.Print("errorr3")
 			log.Error(err)
 			c.Resp(http.StatusInternalServerError, nil, err)
 		}
 
 		if accessToken, err = CreateAccessToken(int(user.Id), user.Role); err != nil {
+			fmt.Print("errorr4")
 			log.Error(err)
 			c.Resp(http.StatusInternalServerError, nil, err)
 		}
 		user.AccessToken = accessToken
 
 		if err = models.UpdateUsersById(&user); err != nil {
+			fmt.Print("errorr5")
 			log.Error(err)
 			c.Resp(http.StatusInternalServerError, nil, err)
 		}
@@ -120,6 +134,7 @@ func (c *AuthController) Register() {
 		)
 
 		if err != nil {
+			fmt.Print("errorr6")
 			log.Error(err)
 			c.Resp(http.StatusInternalServerError, nil, err)
 		}
@@ -131,6 +146,7 @@ func (c *AuthController) Register() {
 	} else {
 		var errMessage string
 		errMessage = "such email already exists"
+		fmt.Print("errorr7")
 
 		err := errors.New(errMessage)
 		c.Resp(http.StatusConflict, nil, err)
