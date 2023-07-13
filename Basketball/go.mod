@@ -24,6 +24,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/gbrlsnchs/jwt v1.1.0 // indirect
+	github.com/go-chi/chi v4.0.0+incompatible // indirect
 	github.com/go-chi/chi/v5 v5.0.8 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
@@ -34,6 +35,8 @@ require (
 	github.com/kylelemons/go-gypsy v1.0.0 // indirect
 	github.com/lib/pq v1.0.0 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
+	github.com/mailgun/mailgun-go/v3 v3.6.4 // indirect
+	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect

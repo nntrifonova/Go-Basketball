@@ -3,28 +3,18 @@ package utiles
 import (
 	"Basketball/conf"
 	"Basketball/models"
+	_ "Basketball/models"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
-	"math/rand"
 	"regexp"
 	"strconv"
-	"unicode"
 )
 
 var SecretKey = conf.GetEnvConst("ACCESS_SECRET")
 
 const CodeLength = 40
-
-func ValidateMobilePhoneNumber(phone string) bool {
-	re := regexp.MustCompile(`^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
-
-	if re.MatchString(phone) {
-		return true
-	}
-	return false
-}
 
 // CanRegistered checks if e-mail is available.
 func CanRegisteredOrChanged(email string) (bool, error) {
@@ -32,6 +22,7 @@ func CanRegisteredOrChanged(email string) (bool, error) {
 	cond = cond.Or("Email", email)
 	var maps []orm.Params
 	o := orm.NewOrm()
+
 	n, err := o.QueryTable("users").SetCond(cond).Values(&maps, "Email")
 
 	if err != nil {
@@ -49,36 +40,36 @@ func CanRegisteredOrChanged(email string) (bool, error) {
 	return emailCheck, nil
 }
 
-func RandomNumberString(n int) string {
-	var letters = []rune("1234567890")
-	s := make([]rune, n)
-
-	for i := range s {
-		s[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(s)
-}
-
-func RandomString(n int) string {
-	var letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
-	}
-	return string(b)
-}
-
-func IsInt(s string) bool {
-
-	for _, c := range s {
-
-		if !unicode.IsDigit(c) {
-			return false
-		}
-	}
-	return true
-}
+//func RandomNumberString(n int) string {
+//	var letters = []rune("1234567890")
+//	s := make([]rune, n)
+//
+//	for i := range s {
+//		s[i] = letters[rand.Intn(len(letters))]
+//	}
+//	return string(s)
+//}
+//
+//func RandomString(n int) string {
+//	var letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+//
+//	b := make([]byte, n)
+//	for i := range b {
+//		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+//	}
+//	return string(b)
+//}
+//
+//func IsInt(s string) bool {
+//
+//	for _, c := range s {
+//
+//		if !unicode.IsDigit(c) {
+//			return false
+//		}
+//	}
+//	return true
+//}
 
 func ValidateEmail(email string) bool {
 	Re := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,6}$`)
@@ -86,7 +77,7 @@ func ValidateEmail(email string) bool {
 }
 
 // get a code for email confirmation
-func GetEmailConfirmationCode(user *models.User, startInf interface{}) string {
+func GetEmailConfirmationCode(user *models.User) string {
 	data := strconv.Itoa(int(user.Id)) + user.Email
 	hexData := strconv.Itoa(int(user.Id)) + "|" + conf.GetEnvConst("ACCESS_SECRET")
 	code := CreateEmailConfirmationCode(data)

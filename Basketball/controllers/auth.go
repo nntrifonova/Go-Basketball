@@ -36,10 +36,10 @@ func (c *AuthController) URLMapping() {
 
 // Create a struct to read the email or phone and password from the request body
 type RegisterCredentials struct {
-	Name        string `json:"signup-name"`
-	Email       string `json:"signup-email"`
-	Password    string `json:"signup-password"`
-	PasswordRep string `json:"signup-confirm"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	PasswordRep string `json:"confirm"`
 }
 
 // Create a struct to read the email or phone and password from the request body
@@ -72,18 +72,16 @@ func (c *AuthController) Register() {
 	s := string(c.Ctx.Input.RequestBody)
 	var emailConfirmationCode string
 
-	log.Printf(s)
-
 	if err = json.Unmarshal([]byte(s), &credentials); err != nil {
-		//fmt.Print("errorr1")
-		//log.Error(err)
-		//c.Resp(http.StatusBadRequest, nil, err)
+		fmt.Print("errorr1")
+		log.Error(err)
+		c.Resp(http.StatusBadRequest, nil, err)
 
-		log.Printf("error decoding sakura response: %v", err)
-		if e, ok := err.(*json.SyntaxError); ok {
-			log.Printf("syntax error at byte offset %d", e.Offset)
-		}
-		log.Printf("sakura response: %q", []byte(s))
+		//log.Printf("error decoding sakura response: %v", err)
+		//if e, ok := err.(*json.SyntaxError); ok {
+		//	log.Printf("syntax error at byte offset %d", e.Offset)
+		//}
+		//log.Printf("sakura response: %q", []byte(s))
 	}
 	// user credentials validation
 	var canRegisteredEmail, _ = utiles.CanRegisteredOrChanged(credentials.Email)
@@ -122,7 +120,7 @@ func (c *AuthController) Register() {
 			log.Error(err)
 			c.Resp(http.StatusInternalServerError, nil, err)
 		}
-		emailConfirmationCode = utiles.GetEmailConfirmationCode(&user, nil)
+		emailConfirmationCode = utiles.GetEmailConfirmationCode(&user)
 		url := conf.GetEnvConst("APP_URL") + "/active/" + emailConfirmationCode
 
 		// send Email to forward user email

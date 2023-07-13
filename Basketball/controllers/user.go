@@ -190,7 +190,7 @@ func (c *UsersController) ValidateEmail() {
 		log.Error(err)
 		c.Resp(http.StatusInternalServerError, nil, err)
 	}
-	emailConfirmationCode = utiles.GetEmailConfirmationCode(user, nil)
+	emailConfirmationCode = utiles.GetEmailConfirmationCode(user)
 	url := conf.GetEnvConst("APP_URL") + "/active/" + emailConfirmationCode
 
 	// send Email to forward user email

@@ -7,16 +7,22 @@ import (
 )
 
 type User struct {
-	Id             int64     `json:"id"`
-	Email          string    `json:"email" orm:"unique;index;size(191)"`
-	AccessToken    string    `orm:"size(128)" json:"access_token"`
-	Name           string    `orm:"size(128)" json:"name" `
-	Role           string    `orm:"size(128)" json:"role"`
-	Password       string    `orm:"size(128)" json:"password"`
-	Created        time.Time `json:"created_on" orm:"auto_now_add;type(datetime)"`
-	Updated        time.Time `json:"updated_on" orm:"auto_now;type(datetime)"`
-	EmailConfirmed bool      `orm:"size(128)" json:"email_confirmed"`
-	RecentLogin    time.Time `orm:"column(recent_login);type(timestamp with time zone);null" json:"recent_login"`
+	Id                 int64     `json:"id"`
+	Name               string    `orm:"size(128)" json:"name"`
+	Email              string    `orm:"size(128);unique" json:"email"`
+	Password           string    `orm:"size(128)" json:"password"`
+	AccessToken        string    `orm:"size(128)" json:"access_token"`
+	Role               string    `orm:"size(128)" json:"role"`
+	CreatedAt          time.Time `orm:"column(created_at);auto_now_add;type(timestamp with time zone);null" json:"created_at"`
+	UpdatedAt          time.Time `orm:"column(updated_at);auto_now;type(timestamp with time zone);null" json:"updated_at"`
+	RecentLogin        time.Time `orm:"column(recent_login);type(timestamp with time zone);null" json:"recent_login"`
+	ValidationCodeSent time.Time `orm:"column(validation_code_sent);type(timestamp with time zone);null" json:"validation_code_sent"`
+	EmailConfirmed     bool      `orm:"size(128)" json:"email_confirmed"`
+}
+
+func (u *User) TableName() string {
+	// db table name
+	return "users"
 }
 
 func init() {

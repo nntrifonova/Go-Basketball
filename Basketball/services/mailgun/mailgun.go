@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/labstack/gommon/log"
-	"github.com/mailgun/mailgun-go/v4"
+	"github.com/mailgun/mailgun-go/v3"
 	"time"
 
 	"Basketball/utiles"
@@ -17,10 +17,12 @@ var MgDomain = conf.GetEnvConst("MAILGUN_DOMAIN")
 
 func SendMail(sender, recipient, subject, text string) (bool, error) {
 	fmt.Printf("Recepient: %s\n", recipient)
+	fmt.Printf(subject)
 
 	if !utiles.ValidateEmail(recipient) {
 		return false, errors.New("email address recipient is invalid")
 	}
+
 	mg := mailgun.NewMailgun(MgDomain, MgApiKey)
 	message := mg.NewMessage(
 		sender,
@@ -34,6 +36,7 @@ func SendMail(sender, recipient, subject, text string) (bool, error) {
 	resp, id, err := mg.Send(ctx, message)
 
 	if err != nil {
+		fmt.Print("error 88")
 		log.Print(err)
 		return false, err
 	}
