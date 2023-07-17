@@ -46,5 +46,13 @@ func init() {
 		beego.NSRouter("/:id/validate_email", &controllers.UsersController{}, "get:ValidateEmail"),
 	)
 
-	beego.AddNamespace(nsAuth, nsApi)
+	ns := beego.NewNamespace("/main",
+		beego.NSNamespace("/posts",
+			beego.NSInclude(
+				&controllers.PostController{},
+			),
+		),
+	)
+
+	beego.AddNamespace(nsAuth, nsApi, ns)
 }
