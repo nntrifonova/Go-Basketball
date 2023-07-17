@@ -26,9 +26,9 @@ type AuthController struct {
 
 // URLMapping ...
 func (c *AuthController) URLMapping() {
-	c.Mapping("Post", c.Register)
-	c.Mapping("Post", c.Login)
-	c.Mapping("Post", c.CheckAccessToken)
+	c.Mapping("Posts", c.Register)
+	c.Mapping("Posts", c.Login)
+	c.Mapping("Posts", c.CheckAccessToken)
 	c.Mapping("Get", c.ConfirmEmail)
 	c.Mapping("Get", c.Logout)
 
@@ -63,6 +63,12 @@ type AuthorizedResponse struct {
 type AccessToken struct {
 	AccessToken string `json:"access_token"`
 	UserID      int64  `json:"user_id"`
+}
+
+type RestorePassword struct {
+	Email string `json:"email"`
+	//UserID      int64  `json:"user_id"`
+	//NewPass string `json:"new_pass"`
 }
 
 func (c *AuthController) Register() {
@@ -215,6 +221,55 @@ func (c *AuthController) Login() {
 		c.Resp(http.StatusOK, token, nil)
 	}
 }
+func (c *AuthController) RestorePassword() {
+	var err error
+	var user *models.User
+	var us models.User
+	var userByEmail *models.User
+	var credentials RestorePassword
+
+	s := string(c.Ctx.Input.RequestBody)
+
+	if err = json.Unmarshal([]byte(s), &credentials); err != nil {
+		log.Error(err)
+		c.Resp(http.StatusBadRequest, nil, err)
+	}
+
+	// Get the existing entry present in the database for the given email
+
+	if userByEmail, err = models.GetUsersByEmail(credentials.Email); err != nil {
+		log.Error(err)
+		log.Info("no email provided")
+	}
+
+	if userByEmail != nil {
+
+		log.Info("Logging by email")
+		log.Info("email: ", credentials.Email)
+		user = userByEmail
+	}
+	if user == nil {
+		err := errors.New("no user found, please check your login data")
+		c.Resp(http.StatusBadRequest, nil, err)
+
+	} else {
+		// We create another instance of `Credentials` to store the credentials we get from the database
+		storedCredentials := &LoginCredentials{}
+		storedCredentials.Password = user.Password
+		var code = utiles.GetEmailConfirmationCode(&us)
+		user.Password = code
+		_, err = mailgun.SendMail(
+			conf.GetEnvConst("NOTIFICATION_EMAIL"),
+			user.Email,
+			"Restore password",
+			code,
+		)
+
+		//if err = bcrypt.CompareHashAndPassword([]byte(storedCredentials.Password), []byte(credentials.Password)); err != nil {
+		//}
+	}
+
+}
 
 func (c *AuthController) CheckAccessToken() {
 	var err error
@@ -253,9 +308,9 @@ func (c *AuthController) ConfirmEmail() {
 		log.Error(err)
 	}
 	s := strings.Split(string(b), "|")
-	ID, _ := strconv.ParseInt(s[0], 10, 64)
+	Id, _ := strconv.ParseInt(s[0], 10, 64)
 
-	if user, err = models.GetUsersById(ID); err != nil {
+	if user, err = models.GetUsersById(Id); err != nil {
 		log.Error(err)
 	}
 	data := strconv.Itoa(int(user.Id)) + user.Email
