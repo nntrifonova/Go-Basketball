@@ -40,37 +40,6 @@ func CanRegisteredOrChanged(email string) (bool, error) {
 	return emailCheck, nil
 }
 
-//func RandomNumberString(n int) string {
-//	var letters = []rune("1234567890")
-//	s := make([]rune, n)
-//
-//	for i := range s {
-//		s[i] = letters[rand.Intn(len(letters))]
-//	}
-//	return string(s)
-//}
-//
-//func RandomString(n int) string {
-//	var letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-//
-//	b := make([]byte, n)
-//	for i := range b {
-//		b[i] = letterBytes[rand.Intn(len(letterBytes))]
-//	}
-//	return string(b)
-//}
-//
-//func IsInt(s string) bool {
-//
-//	for _, c := range s {
-//
-//		if !unicode.IsDigit(c) {
-//			return false
-//		}
-//	}
-//	return true
-//}
-
 func ValidateEmail(email string) bool {
 	Re := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,6}$`)
 	return Re.MatchString(email)

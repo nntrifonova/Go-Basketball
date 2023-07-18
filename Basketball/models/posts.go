@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"github.com/beego/beego/v2/adapter/orm"
 	"strconv"
 	"time"
 )
@@ -11,18 +12,28 @@ var (
 )
 
 type Post struct {
-	PostId      string    `json:"id"`
-	Title       string    `orm:"size(256)" json:"title"`
-	PublishTime time.Time `orm:"column(published_at);auto_now_add;type(timestamp with time zone);null" json:"published_at"`
-	Content     string    `orm:"size(1024)" json:"content"`
-	Image       string    `orm:"size(128)" json:"image"`
+	Id        int64     `json:"post_id"`
+	Title     string    `orm:"size(256)" json:"title"`
+	Content   string    `orm:"size(1024)" json:"content"`
+	CreatedAt time.Time `orm:"column(created_at);auto_now_add;type(timestamp with time zone);null" json:"created_at"`
+	//Image       string    `orm:"size(128)" json:"image"`
 }
 
-func AddOne(post Post) (ArticleId string) {
-	post.PostId = "astaxie" + strconv.FormatInt(time.Now().UnixNano(), 10)
-	post.PublishTime = time.Now().Local()
-	Posts[post.PostId] = &post
-	return post.PostId
+func (p *Post) TableName() string {
+	// db table name
+	return "posts"
+}
+
+func init() {
+	orm.RegisterModel(new(Post))
+}
+
+func AddOne(post Post) (PostId int64) {
+	post.Id = time.Now().UnixNano()
+	post.CreatedAt = time.Now().Local()
+	s := strconv.Itoa(int(post.Id))
+	Posts[s] = &post
+	return post.Id
 }
 
 func GetOne(PostId string) (post *Post, err error) {
@@ -46,7 +57,7 @@ func Update(PostId string, title, content string) (err error) {
 		v.Content = content
 		return nil
 	}
-	return errors.New("PostId Not Exist")
+	return errors.New("Id Not Exist")
 }
 
 func Delete(PostId string) {

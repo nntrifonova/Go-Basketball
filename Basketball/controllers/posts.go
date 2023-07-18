@@ -4,6 +4,7 @@ import (
 	"Basketball/models"
 	"encoding/json"
 	beego "github.com/beego/beego/v2/server/web"
+	"strconv"
 )
 
 // Operations about article
@@ -25,7 +26,8 @@ func (o *PostController) Post() {
 		return
 	}
 	postid := models.AddOne(ob)
-	o.Data["json"] = map[string]string{"PostId": postid}
+	s := strconv.Itoa(int(postid))
+	o.Data["json"] = map[string]string{"Id": s}
 	o.ServeJSON()
 }
 

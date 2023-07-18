@@ -172,6 +172,7 @@ func (c *AuthController) Login() {
 	}
 
 	// Get the existing entry present in the database for the given email
+	fmt.Print(credentials.Email)
 	if userByEmail, err = models.GetUsersByEmail(credentials.Email); err != nil {
 		log.Error(err)
 		log.Info("no email provided")

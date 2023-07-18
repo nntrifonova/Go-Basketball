@@ -53,6 +53,7 @@ func GetUsersById(id int64) (v *User, err error) {
 // Id doesn't exist
 func GetUsersByEmail(email string) (v *User, err error) {
 	o := orm.NewOrm()
+
 	v = &User{Email: email}
 
 	if err = o.QueryTable(new(User)).Filter("Email", email).RelatedSel().One(v); err == nil {
