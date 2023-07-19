@@ -44,8 +44,8 @@ type RegisterCredentials struct {
 
 // Create a struct to read the email or phone and password from the request body
 type LoginCredentials struct {
-	Email    string `json:"login-email"`
-	Password string `json:"login-password"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // Create a struct to read the email or phone and password from the request body
@@ -172,7 +172,7 @@ func (c *AuthController) Login() {
 	}
 
 	// Get the existing entry present in the database for the given email
-	fmt.Print(credentials.Email)
+
 	if userByEmail, err = models.GetUsersByEmail(credentials.Email); err != nil {
 		log.Error(err)
 		log.Info("no email provided")
