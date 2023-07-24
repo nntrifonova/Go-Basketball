@@ -1,9 +1,13 @@
 package controllers
 
-import beego "github.com/beego/beego/v2/server/web"
+import (
+	"fmt"
+	beego "github.com/beego/beego/v2/server/web"
+)
 
 type BaseController struct {
 	beego.Controller
+	isLogin bool
 }
 
 func (c *BaseController) Resp(status int, data interface{}, err error) {
@@ -27,4 +31,15 @@ func (c *BaseController) GetString(key string, def ...string) string {
 		return def[0]
 	}
 	return ""
+}
+
+func (this *BaseController) Prepare() {
+	userLogin := this.GetSession("userLogin")
+	fmt.Println("userLogin", userLogin)
+	if userLogin == nil {
+		this.isLogin = false
+	} else {
+		this.isLogin = true
+	}
+	this.Data["isLogin"] = this.isLogin
 }

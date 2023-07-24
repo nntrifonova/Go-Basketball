@@ -1,96 +1,212 @@
 package controllers
 
 import (
-	"Basketball/models"
 	"encoding/json"
 	beego "github.com/beego/beego/v2/server/web"
+	"github.com/beego/beego/v2/server/web/pagination"
+	"github.com/labstack/gommon/log"
+	"net/http"
 	"strconv"
+
+	"Basketball/models"
+	"fmt"
 )
 
-// Operations about article
-type PostController struct {
-	beego.Controller
+// 添加blog
+type PostsController struct {
+	BaseController
 }
 
-// @Title Create
-// @Description create article
-// @Param	body		body 	models.Post	true		"The post content"
-// @Success 200 {string} models.Post.Id
-// @Failure 403 body is empty
-// @router / [post]
-func (o *PostController) Post() {
-	var ob models.Post
-	json.Unmarshal(o.Ctx.Input.RequestBody, &ob)
-	if ob.Title == "" || ob.Content == "" {
-		o.Ctx.Output.SetStatus(403)
+// URLMapping ...
+func (p *PostsController) URLMapping() {
+	p.Mapping("Posts", p.CreatePost)
+	p.Mapping("Posts", p.PostEdit)
+	p.Mapping("Get", p.GetPosts)
+	p.Mapping("Get", p.GetEdit)
+	p.Mapping("Get", p.GetShow)
+	p.Mapping("Get", p.GetList)
+}
+
+type PostCredentials struct {
+	title   string `json:"title"`
+	content string `json:"content"`
+	author  int64  `json:"author"`
+}
+
+func (p *PostsController) GetPosts() {
+	//if !p.isLogin {
+	//	p.Redirect("/auth/login", 302)
+	//	return
+	//}
+
+	var post models.Post
+	post.Status = 1
+	p.Data["post"] = post
+
+}
+
+func (p *PostsController) CreatePost() {
+	var err error
+	//if !p.isLogin {
+	//	p.Data["json"] = map[string]interface{}{"code": 0, "message": "请先登录"}
+	//	p.ServeJSON()
+	//	return
+	//}
+
+	var credentials PostCredentials
+	s := string(p.Ctx.Input.RequestBody)
+
+	if err = json.Unmarshal([]byte(s), &credentials); err != nil {
+		fmt.Print("errorr1")
+		log.Error(err)
+		p.Resp(http.StatusBadRequest, nil, err)
+
+		if "" == credentials.title {
+			p.Data["json"] = map[string]interface{}{"code": 0, "message": "no title"}
+			p.ServeJSON()
+			return
+		}
+		if "" == credentials.content {
+			p.Data["json"] = map[string]interface{}{"code": 0, "message": "no content"}
+			p.ServeJSON()
+			return
+		}
+
+		var post models.Post
+		post.Title = credentials.title
+		post.AuthorId = credentials.author
+
+		id, err := models.AddArticle(post)
+		if err == nil {
+			p.Data["json"] = map[string]interface{}{"code": 1, "message": "add post", "id": id}
+		} else {
+			p.Data["json"] = map[string]interface{}{"code": 0, "message": "can't add post"}
+		}
+		p.Ctx.Output.SetStatus(http.StatusCreated)
+		p.ServeJSON()
+
+	}
+}
+
+func (p *PostsController) GetEdit() {
+	//if !p.isLogin {
+	//	p.Data["json"] = map[string]interface{}{"code": 0, "message": "ooo"}
+	//	p.ServeJSON()
+	//	return
+	//}
+	idstr := p.Ctx.Input.Param(":id")
+	id_, err := strconv.Atoi(idstr)
+	var id = int64(id_)
+	art, err := models.GetArticle(id)
+	if err != nil {
+		p.Redirect("/404.html", 302)
+	}
+	//p.Data["json"] = map[string]interface{}{"code": 0, "message": err}
+	//p.ServeJson()
+	p.Data["art"] = art
+
+}
+
+func (p *PostsController) PostEdit() {
+	id_, err := p.GetInt("id")
+	title := p.GetString("title")
+	content := p.GetString("content")
+	fmt.Println("content", content)
+	author, e := p.GetInt("author")
+	status, _ := p.GetInt("status")
+
+	if "" == title {
+		p.Data["json"] = map[string]interface{}{"code": 0, "message": "请填写标题"}
+		p.ServeJSON()
 		return
 	}
-	postid := models.AddOne(ob)
-	s := strconv.Itoa(int(postid))
-	o.Data["json"] = map[string]string{"Id": s}
-	o.ServeJSON()
-}
-
-// @Title Get
-// @Description find article by articleid
-// @Param	postId		path 	string	true		"the articleid you want to get"
-// @Success 200 {post} models.Post
-// @Failure 403 :postId is empty
-// @router /:postId [get]
-func (o *PostController) Get() {
-	postId := o.Ctx.Input.Param(":postId")
-	if postId != "" {
-		ob, err := models.GetOne(postId)
-		if err != nil {
-			o.Data["json"] = err.Error()
-		} else {
-			o.Data["json"] = ob
-		}
+	if "" == content {
+		p.Data["json"] = map[string]interface{}{"code": 0, "message": "请填写内容"}
+		p.ServeJSON()
+		return
 	}
-	o.ServeJSON()
-}
+	var id = int64(id_)
+	_, errAttr := models.GetArticle(id)
+	if errAttr != nil {
+		p.Data["json"] = map[string]interface{}{"code": 0, "message": "博客不存在"}
+		p.ServeJSON()
+		return
+	}
 
-// @Title GetAll
-// @Description get all articles
-// @Success 200 {post} models.Post
-// @Failure 403 : postId is empty
-// @router / [get]
-func (o *PostController) GetAll() {
-	obs := models.GetAll()
-	o.Data["json"] = obs
-	o.ServeJSON()
-}
-
-// @Title Update
-// @Description update the article
-// @Param	postId		path 	string	true		"The articleid you want to update"
-// @Param	body		body 	models.Post	true		"The body"
-// @Success 200 {article} models.Post
-// @Failure 403 :postId is empty
-// @router /:postId [put]
-func (o *PostController) Put() {
-	postId := o.Ctx.Input.Param(":postId")
-	var ob models.Post
-	json.Unmarshal(o.Ctx.Input.RequestBody, &ob)
-
-	err := models.Update(postId, ob.Title, ob.Content)
-	if err != nil {
-		o.Data["json"] = err.Error()
+	var post models.Post
+	post.Title = title
+	if e == nil {
+		post.AuthorId = int64(author)
 	} else {
-		o.Data["json"] = "update success!"
+		p.Data["json"] = map[string]interface{}{"code": 0, "message": "author error"}
 	}
-	o.ServeJSON()
+	post.Status = status
+
+	err = models.UpdateArticle(id, post)
+	if err == nil {
+		p.Data["json"] = map[string]interface{}{"code": 1, "message": "博客修改成功", "id": id}
+	} else {
+		p.Data["json"] = map[string]interface{}{"code": 0, "message": "博客修改出错"}
+	}
+	p.ServeJSON()
 }
 
-// @Title Delete
-// @Description delete the article
-// @Param	postId		path 	string	true		"The articleId you want to delete"
-// @Success 200 {string} delete success!
-// @Failure 403 postId is empty
-// @router /:postId [delete]
-func (o *PostController) Delete() {
-	postId := o.Ctx.Input.Param(":articleId")
-	models.Delete(postId)
-	o.Data["json"] = "delete success!"
-	o.ServeJSON()
+func (p *PostsController) GetList() {
+	page, err1 := p.GetInt("p")
+	title := p.GetString("title")
+	keywords := p.GetString("keywords")
+	status := p.GetString("status")
+	if err1 != nil {
+		page = 1
+	}
+
+	offset, err2 := beego.AppConfig.Int("pageoffset")
+	if err2 != nil {
+		offset = 9
+	}
+
+	condArr := make(map[string]string)
+	condArr["title"] = title
+	condArr["keywords"] = keywords
+	if !p.isLogin {
+		condArr["status"] = "1"
+	} else {
+		condArr["status"] = status
+	}
+	countArticle := models.CountArticle(condArr)
+
+	paginator := pagination.SetPaginator(p.Ctx, offset, countArticle)
+	_, _, art := models.ListArticle(condArr, page, offset)
+
+	p.Data["paginator"] = paginator
+	p.Data["art"] = art
+
+}
+
+func (p *PostsController) GetShow() {
+	idstr := p.Ctx.Input.Param(":id")
+	id_, err := strconv.Atoi(idstr)
+	var id = int64(id_)
+	post, err := models.GetArticle(id)
+	if err != nil {
+		p.Redirect("/404.html", 302)
+	}
+
+	p.Data["post"] = post
+
+	// 评论分页
+	//page, err1 := p.GetInt("p")
+	//if err1 != nil {
+	//	page = 1
+	//}
+	//offset, err2 := beego.AppConfig.Int("pageoffset")
+	//if err2 != nil {
+	//	offset = 9
+	//}
+	//condCom := make(map[string]string)
+	//condCom["article"] = idstr
+	//if !p.isLogin {
+	//	condCom["status"] = "1"
+	//}
+
 }

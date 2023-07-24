@@ -20,7 +20,7 @@
   border-bottom: 1px solid #f2f2f2;
 }
 .navbar h1 {
-  color: #f1356d;
+  color: #f1a635;
 }
 .navbar .links {
   margin-left: auto;
@@ -31,13 +31,26 @@
   padding: 6px;
 }
 .navbar a:hover {
-  color: #f1356d;
+  color: #f1a635;
 }
 .content {
   max-width: 600px;
   margin: 40px auto;
   padding: 20px;
 }
+
+.form-group{
+  display: block;
+  margin: 0.7rem;
+}
+
+
+.credentials-input{
+  padding:10px;
+  border-radius:10px;
+  width: 280px;
+}
+
 
 /* blog previews / list */
 .blog-preview {
@@ -50,7 +63,7 @@
 }
 .blog-preview h2 {
   font-size: 20px;
-  color: #f1356d;
+  color: #f1a635;
   margin-bottom: 8px;
 }
 .blog-preview a {
@@ -58,7 +71,7 @@
 }
 .blog-details h2 {
   font-size: 20px;
-  color: #f1356d;
+  color: #f1a635;
   margin-bottom: 10px;
 }
 
@@ -67,7 +80,7 @@
 }
 
 .blog-details button {
-  background: #f1356d;
+  background: #f1a635;
   color: #fff;
   border: 0;
   padding: 8px;
@@ -86,7 +99,7 @@
 }
 .create h2 {
   font-size: 20px;
-  color: #f1356d;
+  color: #f1a635;
   margin-bottom: 30px;
 }
 .create input,
@@ -100,7 +113,7 @@
   display: block;
 }
 .create button {
-  background: #f1356d;
+  background: #f1a635;
   color: #fff;
   border: 0;
   padding: 8px;
