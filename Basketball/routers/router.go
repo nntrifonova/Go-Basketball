@@ -49,7 +49,7 @@ func init() {
 	ns := beego.NewNamespace("/main",
 		beego.NSNamespace("/posts",
 			beego.NSInclude(
-				&controllers.PostController{},
+				&controllers.PostsController{},
 			),
 		),
 	)
