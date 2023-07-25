@@ -34,7 +34,7 @@
   color: #f1a635;
 }
 .content {
-  max-width: 600px;
+  /*max-width: 600px;*/
   margin: 40px auto;
   padding: 20px;
 }
@@ -89,7 +89,7 @@
 }
 
 .create {
-  max-width: 400px;
+  /*max-width: 400px;*/
   margin: 0 auto;
   text-align: center;
 }
