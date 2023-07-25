@@ -34,6 +34,7 @@ func init() {
 func AddUsers(m *User) (id int64, err error) {
 	o := orm.NewOrm()
 	id, err = o.Insert(m)
+	fmt.Print("it's doneS")
 	return
 }
 

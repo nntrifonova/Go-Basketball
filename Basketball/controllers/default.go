@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	beego "github.com/beego/beego/v2/server/web"
 )
 
@@ -33,13 +32,13 @@ func (c *BaseController) GetString(key string, def ...string) string {
 	return ""
 }
 
-func (this *BaseController) Prepare() {
-	userLogin := this.GetSession("userLogin")
-	fmt.Println("userLogin", userLogin)
-	if userLogin == nil {
-		this.isLogin = false
-	} else {
-		this.isLogin = true
-	}
-	this.Data["isLogin"] = this.isLogin
-}
+//func (this *BaseController) Prepare() {
+//	userLogin := this.GetSession("userLogin")
+//	fmt.Println("userLogin", userLogin)
+//	if userLogin == nil {
+//		this.isLogin = false
+//	} else {
+//		this.isLogin = true
+//	}
+//	this.Data["isLogin"] = this.isLogin
+//}

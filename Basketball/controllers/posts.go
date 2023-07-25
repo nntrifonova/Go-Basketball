@@ -99,7 +99,7 @@ func (p *PostsController) GetEdit() {
 	var id = int64(id_)
 	art, err := models.GetArticle(id)
 	if err != nil {
-		p.Redirect("/404.html", 302)
+		fmt.Print("error 1 in edit post")
 	}
 	//p.Data["json"] = map[string]interface{}{"code": 0, "message": err}
 	//p.ServeJson()
@@ -154,7 +154,6 @@ func (p *PostsController) PostEdit() {
 func (p *PostsController) GetList() {
 	page, err1 := p.GetInt("p")
 	title := p.GetString("title")
-	keywords := p.GetString("keywords")
 	status := p.GetString("status")
 	if err1 != nil {
 		page = 1
@@ -167,7 +166,6 @@ func (p *PostsController) GetList() {
 
 	condArr := make(map[string]string)
 	condArr["title"] = title
-	condArr["keywords"] = keywords
 	if !p.isLogin {
 		condArr["status"] = "1"
 	} else {
