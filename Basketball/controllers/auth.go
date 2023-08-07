@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"strconv"
@@ -63,6 +62,7 @@ type AuthorizedResponse struct {
 type AccessToken struct {
 	AccessToken string `json:"access_token"`
 	UserID      int64  `json:"user_id"`
+	Link        string `json:"link"`
 }
 
 type RestorePassword struct {
@@ -72,9 +72,11 @@ type RestorePassword struct {
 }
 
 func (c *AuthController) Register() {
+	fmt.Print("register method")
 	var err error
 	var user models.User
 	var credentials RegisterCredentials
+
 	s := string(c.Ctx.Input.RequestBody)
 	var emailConfirmationCode string
 
@@ -82,73 +84,74 @@ func (c *AuthController) Register() {
 		fmt.Print("errorr1")
 		log.Error(err)
 		c.Resp(http.StatusBadRequest, nil, err)
+	}
+	// user credentials validation
+	var canRegisteredEmail, _ = utiles.CanRegisteredOrChanged(credentials.Email)
 
-		// user credentials validation
-		var canRegisteredEmail, _ = utiles.CanRegisteredOrChanged(credentials.Email)
+	if !utiles.ValidateEmail(credentials.Email) {
+		fmt.Print("errorr2")
+		var err = errors.New("email address is invalid")
+		c.Resp(http.StatusInternalServerError, nil, err)
+	}
+	user.Role = "user"
+	fmt.Print(canRegisteredEmail, "can?")
+	if canRegisteredEmail {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(credentials.Password), 8)
+		user.Email = strings.ToLower(credentials.Email)
+		user.Name = credentials.Name
+		user.Password = string(hashedPassword)
+		user.EmailConfirmed = false
+		var accessToken string
+		var userID int64
 
-		if !utiles.ValidateEmail(credentials.Email) {
-			fmt.Print("errorr2")
-			var err = errors.New("email address is invalid")
+		fmt.Print(userID, "-userId")
+		if userID, err = models.AddUsers(&user); err != nil {
+			fmt.Print("errorr3")
+			log.Error(err)
 			c.Resp(http.StatusInternalServerError, nil, err)
 		}
-		user.Role = "user"
 
-		if canRegisteredEmail {
-			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(credentials.Password), 8)
-			user.Email = strings.ToLower(credentials.Email)
-			user.Name = credentials.Name
-			user.Password = string(hashedPassword)
-			user.EmailConfirmed = false
-			var accessToken string
-			var userID int64
-
-			if userID, err = models.AddUsers(&user); err != nil {
-				fmt.Print("errorr3")
-				log.Error(err)
-				c.Resp(http.StatusInternalServerError, nil, err)
-			}
-
-			if accessToken, err = CreateAccessToken(int(user.Id), user.Role); err != nil {
-				fmt.Print("errorr4")
-				log.Error(err)
-				c.Resp(http.StatusInternalServerError, nil, err)
-			}
-			user.AccessToken = accessToken
-
-			if err = models.UpdateUsersById(&user); err != nil {
-				fmt.Print("errorr5")
-				log.Error(err)
-				c.Resp(http.StatusInternalServerError, nil, err)
-			}
-			emailConfirmationCode = utiles.GetEmailConfirmationCode(&user)
-			url := conf.GetEnvConst("APP_URL") + "/active/" + emailConfirmationCode
-
-			// send Email to forward user email
-			_, err = mailgun.SendMail(
-				conf.GetEnvConst("NOTIFICATION_EMAIL"),
-				user.Email,
-				"Email validation code",
-				url,
-			)
-
-			if err != nil {
-				fmt.Print("errorr6")
-				log.Error(err)
-				c.Resp(http.StatusInternalServerError, nil, err)
-			}
-			var token AccessToken
-			token.AccessToken = accessToken
-			token.UserID = userID
-			c.Resp(http.StatusCreated, token, nil)
-
-		} else {
-			var errMessage string
-			errMessage = "such email already exists"
-			fmt.Print("errorr7")
-
-			err := errors.New(errMessage)
-			c.Resp(http.StatusConflict, nil, err)
+		if accessToken, err = CreateAccessToken(int(user.Id), user.Role); err != nil {
+			fmt.Print("errorr4")
+			log.Error(err)
+			c.Resp(http.StatusInternalServerError, nil, err)
 		}
+		user.AccessToken = accessToken
+
+		if err = models.UpdateUsersById(&user); err != nil {
+			fmt.Print("errorr5")
+			log.Error(err)
+			c.Resp(http.StatusInternalServerError, nil, err)
+		}
+		emailConfirmationCode = utiles.GetEmailConfirmationCode(&user)
+		url := conf.GetEnvConst("APP_URL") + "/active/" + emailConfirmationCode
+
+		// send Email to forward user email
+		_, err = mailgun.SendMail(
+			conf.GetEnvConst("NOTIFICATION_EMAIL"),
+			user.Email,
+			"Email validation code",
+			url,
+		)
+
+		if err != nil {
+			fmt.Print("errorr6")
+			log.Error(err)
+			c.Resp(http.StatusInternalServerError, nil, err)
+		}
+		var token AccessToken
+		token.AccessToken = accessToken
+		token.UserID = userID
+		token.Link = "/"
+		c.Resp(http.StatusCreated, token, nil)
+
+	} else {
+		var errMessage string
+		errMessage = "such email already exists"
+		fmt.Print("errorr7")
+
+		err := errors.New(errMessage)
+		c.Resp(http.StatusConflict, nil, err)
 	}
 }
 
@@ -162,12 +165,13 @@ func (c *AuthController) Login() {
 	s := string(c.Ctx.Input.RequestBody)
 
 	if err = json.Unmarshal([]byte(s), &credentials); err != nil {
+		fmt.Print("111")
 		log.Error(err)
 		c.Resp(http.StatusBadRequest, nil, err)
 	}
 
 	// Get the existing entry present in the database for the given email
-
+	fmt.Print(credentials.Email)
 	if userByEmail, err = models.GetUsersByEmail(credentials.Email); err != nil {
 		log.Error(err)
 		log.Info("no email provided")
@@ -209,6 +213,7 @@ func (c *AuthController) Login() {
 		token.UserID = user.Id
 		user.AccessToken = accessToken
 		user.RecentLogin = time.Now()
+		token.Link = "/"
 
 		if err = models.UpdateUsersById(user); err != nil {
 			log.Error(err)
